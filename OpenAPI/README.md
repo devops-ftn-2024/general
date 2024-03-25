@@ -1,0 +1,13 @@
+- [x] 1.1 Registracija naloga
+- [x] 1.2 Prijava na sistem
+- [x] 1.3 Upravljanje nalogom
+- [x] 1.4 Brisanje naloga
+- [x] 1.5 Kreiranje smeštaja
+- [ ] 1.6 Definisanje dostupnosti i cene smeštaja
+- [x] 1.7 Pretraga smeštaja
+- [ ] 1.8 Zahtevi za rezervaciju smeštaja
+- [ ] 1.9 Otkazivanje rezervacije
+- [ ] 1.10 Potvrda rezervacije
+- [ ] 1.11 Ocenjivanje host-ova
+- [ ] 1.12 Ocenjivanje smeštaja
+- [ ] 1.13 Notifikacije

@@ -1,0 +1,796 @@
+openapi: 3.0.3
+info:
+  title: Accommodatio API
+  version: 0.1.0
+servers:
+  - url: http://accommodatio.local/api/v1
+tags:
+  - name: auth
+    description: Operations related to user authentication and registration
+  - name: account
+    description: Operations related to account management
+  - name: accommodations
+    description: Operations related to accommodation management and browsing
+  - name: reservations
+    description: Operations related to reservations
+
+  
+  - name: "1.1"
+    description: Registracija naloga
+  - name: "1.2"
+    description: Prijava na sistem
+  - name: "1.3"
+    description: Upravljanje nalogom
+  - name: "1.4"
+    description: Brisanje naloga
+  - name: "1.5"
+    description: Kreiranje smeštaja
+  - name: "1.6"
+    description: Definisanje dostupnosti i cene smeštaja
+  - name: "1.7"
+    description: Pretraga smeštaja
+  - name: "1.8"
+    description: Zahtevi za rezervaciju smeštaja
+  - name: "1.9"
+    description: Otkazivanje rezervacije
+  - name: "1.10"
+    description: Potvrda rezervacije
+  - name: "1.11"
+    description: Ocenjivanje host-ova
+  - name: "1.12"
+    description: Ocenjivanje smeštaja
+  - name: "1.13"
+    description: Notifikacije
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - auth
+        - "1.2"
+      summary: Log in user
+      description: Checks provided credentials in the database and issues JWT authentication token to the user.
+      operationId: loginUser
+      requestBody:
+        description: User credentials
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  description: User's username
+                  example: john
+                password:
+                  type: string
+                  format: password
+                  description: User's password
+                  example: 123456
+      responses:
+        '200':
+          description: User authenticated successfully
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: token=eyJhbGciOi...; Path=/; HttpOnly
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: JWT authentication token
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+                  exp:
+                    type: integer
+                    description: Token expiration UNIX timestamp
+                    example: 1711358076
+        '400':
+          description: Malformed syntax or data does not pass validations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /auth/register:
+    post:
+      tags:
+        - auth
+        - "1.1"
+      summary: Register new user
+      description: Registers a new user account, ensuring the username is unique. Requires name, surname, email address, place of residence and user's role (**host** or **guest**).
+      operationId: registerUser
+      requestBody:
+        description: User registration data
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - name
+                - surname
+                - email
+                - residence
+                - password
+                - passwordConfirmation
+              properties:
+                username:
+                  type: string
+                  description: Unique username for the user
+                  example: john
+                name:
+                  type: string
+                  description: User's first name
+                  example: John
+                surname:
+                  type: string
+                  description: User's last name
+                  example: Doe
+                email:
+                  type: string
+                  format: email
+                  description: User's email address
+                  example: john.doe@example.org
+                residence:
+                  type: string
+                  description: User's place of residence
+                  example: Bulevar Oslobodjenja 1, Novi Sad
+                role:
+                  type: string
+                  enum: [host, guest]
+                  description: User's role which can be either host or guest
+                password:
+                  type: string
+                  format: password
+                  description: User's password
+                  example: 123456
+                passwordConfirmation:
+                  type: string
+                  format: password
+                  description: User's password confirmation 
+                  example: 123456
+      responses:
+        '200':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A human-readable description of the message.
+        '400':
+          description: Malformed syntax or data does not pass validations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Username or email is occupied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /auth/profile:
+    get:
+      tags:
+          - auth
+          - "1.2"
+      summary: Get current user's profile for identification purposes
+      description: Returns profile information for the currently authenticated user for identification purposes
+      operationId: getUserProfile
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Profile information retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+                    example: john
+                  role:
+                    type: string
+                    example: host
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /account:
+    get:
+      tags:
+          - account
+          - "1.3"
+      summary: Get current user's account info
+      description: Returns profile information for the currently authenticated user
+      operationId: getUserInfo
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Profile information retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+                    example: john
+                  name:
+                    type: string
+                    example: John
+                  surname:
+                    type: string
+                    example: Doe
+                  email:
+                    type: string
+                    format: email
+                    example: john.doe@example.org
+                  residence:
+                    type: string
+                    example: Bulevar Oslobodjenja 1, Novi Sad
+                  role:
+                    type: string
+                    example: host
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags:
+        - account
+        - "1.3"
+      summary: Update own profile
+      description: Updates current user's profile with the provided data
+      operationId: updateUser
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        description: Updated user data
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - name
+                - surname
+                - email
+                - residence
+              properties:
+                username:
+                  type: string
+                  description: Unique username for the user
+                  example: john
+                name:
+                  type: string
+                  description: User's first name
+                  example: John
+                surname:
+                  type: string
+                  description: User's last name
+                  example: Doe
+                email:
+                  type: string
+                  format: email
+                  description: User's email address
+                  example: john.doe@example.org
+                residence:
+                  type: string
+                  description: User's place of residence
+                  example: Bulevar Oslobodjenja 1, Novi Sad
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A human-readable description of the message.
+        '400':
+          description: Malformed syntax or data does not pass validations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Username or email is occupied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - account
+        - "1.4"
+      summary: Delete own account
+      description: Deletes current user's account
+      operationId: deleteAccount
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        '200':
+          description: User deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A human-readable description of the message.
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /account/password:
+    patch:
+      tags:
+        - account
+        - "1.3"
+      summary: Update own password
+      description: Updates current user's password with the provided new password
+      operationId: updatePassword
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        description: Updated user password
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - oldPassword
+                - newPassword
+                - newPasswordConfirmation
+              properties:
+                oldPassword:
+                  type: string
+                  format: password
+                  description: User's old password
+                  example: 123456
+                newPassword:
+                  type: string
+                  format: password
+                  description: New password
+                  example: password1
+                newPasswordConfirmation:
+                  type: string
+                  format: password
+                  description: New password confirmation
+                  example: password1
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A human-readable description of the message.
+        '400':
+          description: Malformed syntax or data does not pass validations (e.g. unfullfiled password policies or passwords do not match)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /accommodations:
+    get:
+      tags:
+        - accommodations
+        - "1.7"
+      summary: Search for accommodations
+      description: Searches for available accommodations based on location, number of guests, and travel dates. Returns basic information along with total and per night prices.
+      operationId: searchAccommodations
+      parameters:
+        - in: query
+          name: location
+          required: true
+          schema:
+            type: string
+          example: fruska gora
+        - in: query
+          name: guests
+          required: true
+          schema:
+            type: integer
+          example: 2
+        - in: query
+          name: startDate
+          required: true
+          schema:
+            type: string
+            format: date
+          example: "2024-04-01"
+        - in: query
+          name: endDate
+          required: true
+          schema:
+            type: string
+            format: date
+          example: "2024-04-10"
+      responses:
+        '200':
+          description: Search results containing available accommodations.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    slug:
+                      type: string
+                      description: URL path of the accommodation.
+                      example: '/vikendica-na-fruskoj-gori-c4f89d'
+                    name:
+                      type: string
+                      example: "Vikendica na Fruškoj Gori"
+                    location:
+                      type: string
+                      example: "Fruška Gora"
+                    minGuests:
+                      type: integer
+                      example: 1
+                    maxGuests:
+                      type: integer
+                      example: 5
+                    photos:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                      description: URLs to photos of the accommodation.
+                    totalPrice:
+                      type: number
+                      format: float
+                      description: Total price for the specified number of nights.
+                    pricePerNight:
+                      type: number
+                      format: float
+                      description: Price per night, which can be per person or per accommodation unit, depending on the property.
+        '400':
+          description: Malformed syntax or data does not pass validations (e.g. malformed query parameters)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+        - accommodations
+        - "1.5"
+      summary: Create a new accommodation
+      description: Creates a new accommodation with specified details including name, location, amenities, photos, and guest capacity. Ownership should be checked for each photo.
+      operationId: createAccommodation
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - location
+                - amenities
+                - photos
+                - minGuests
+                - maxGuests
+              properties:
+                name:
+                  type: string
+                  description: Name of the accommodation.
+                  example: "Vikendica na Fruškoj Gori"
+                location:
+                  type: string
+                  description: Location of the accommodation.
+                  example: "Fruška Gora"
+                amenities:
+                  type: array
+                  items:
+                    type: string
+                  description: List of amenities provided (e.g., WiFi, kitchen, air conditioning, free parking).
+                  example: ["WiFi", "kitchen", "air conditioning"]
+                photos:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: IDs of photos of the accommodation.
+                minGuests:
+                  type: integer
+                  description: Minimum number of guests that can be accommodated.
+                  example: 1
+                maxGuests:
+                  type: integer
+                  description: Maximum number of guests that can be accommodated.
+                  example: 5
+      responses:
+        '201':
+          description: Accommodation created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  slug:
+                    type: string
+                    example: "vikendica-na-fruskoj-gori-c4f89d"
+                    description: URL slug of the newly created accommodation.
+                  message:
+                    type: string
+                    description: A message indicating successful creation of the accommodation.
+        '400':
+          description: Malformed syntax or data does not pass validations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Request refused due to lack of privileges
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /accommodations/photos:
+    post:
+      tags:
+        - accommodations
+        - "1.5"
+      summary: Upload a photo for accomodation
+      description: Uploads and keeps track of an uploaded photo including its UUID and author.
+      operationId: createPhoto
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                pictures:
+                  type: array
+                  description: Array of pictures to upload.
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        '201':
+          description: Pictures uploaded successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A message confirming the successful upload.
+                  uploadedPictures:
+                    type: array
+                    items:
+                      type: string
+                      format: uuid
+                      description: ID of the uploaded picture.
+        '400':
+          description: Malformed syntax or data does not pass validations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Request refused due to lack of privileges
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /accommodations/{slug}:
+    get:
+      tags:
+        - accommodations
+        - "1.7"
+      summary: Retrieve accommodation details
+      description: Retrieves detailed information about a specific accommodation using its slug. Includes name, location, amenities, photos, and guest capacity.
+      operationId: getAccommodationBySlug
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+          description: The slug of the accommodation to retrieve.
+          example: vikendica-na-fruskoj-gori-c4f89d
+      responses:
+        '200':
+          description: Accommodation details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    example: "Vikendica na Fruškoj Gori"
+                  location:
+                    type: string
+                    example: "Fruška gora"
+                  amenities:
+                    type: array
+                    items:
+                      type: string
+                      example: ["WiFi", "kitchen", "air conditioning"]
+                  photos:
+                    type: array
+                    items:
+                      type: string
+                      format: uuid
+                  minGuests:
+                    type: integer
+                    example: 1
+                  maxGuests:
+                    type: integer
+                    example: 5
+        '404':
+          description: Accommodation not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: A human-readable description of the error.
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
