@@ -722,9 +722,6 @@ paths:
       summary: Retrieve accommodation details
       description: Retrieves detailed information about a specific accommodation using its slug. Includes name, location, amenities, photos, and guest capacity.
       operationId: getAccommodationBySlug
-      security:
-        - bearerAuth: []
-        - cookieAuth: []
       parameters:
         - in: path
           name: slug
@@ -775,7 +772,369 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  
+  /accommodations/{slug}/slots:
+    get:
+      tags:
+        - accommodations
+        - "1.6"
+      summary: Retrieve available days to book an accommodation
+      description: Calculates and returns available slots and their prices based on defined accommodation availability ranges, existing reseravations, and defined prices. For easier representation on UI calendar, dates and prices are returned in a long array.
+      operationId: getAccommodationAvailableSlots
+      parameters:
+      - in: path
+        name: slug
+        required: true
+        schema:
+          type: string
+        description: The slug of the accommodation to retrieve.
+        example: vikendica-na-fruskoj-gori-c4f89d
+      responses:
+        '200':
+          description: Availability slots of given accommodation.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    date:
+                      type: string
+                      format: date
+                    price:
+                      type: number
+              example:
+                  - date: '2024-04-01'
+                    price: 1200
+                  - date: '2024-04-02'
+                    price: 1200
+                  - date: '2024-04-03'
+                    price: 1200
+                  - date: '2024-04-04'
+                    price: 1200
+                  - date: '2024-04-05'
+                    price: 1200
+                  - date: '2024-04-06'
+                    price: 1500
+                  - date: '2024-04-07'
+                    price: 1500
+                  - date: '2024-04-08'
+                    price: 1200
+                  - date: '2024-04-09'
+                    price: 1200
+                  - date: '2024-04-10'
+                    price: 1200
+                  - date: '2024-04-15'
+                    price: 1200
+                  - date: '2024-04-16'
+                    price: 1200
+                  - date: '2024-04-17'
+                    price: 1200
+                  - date: '2024-04-18'
+                    price: 1200
+                  - date: '2024-04-19'
+                    price: 1200
+                  - date: '2024-04-20'
+                    price: 1500
+                  - date: '2024-04-21'
+                    price: 1500
+        '404':
+          description: Accommodation not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /accommodations/{slug}/availability-periods:
+    get:
+      tags:
+        - accommodations
+        - "1.6"
+      summary: Retrieve defined availability periods for an accommodation
+      description: Returns defined availability periods for the specified accommodation.
+      operationId: getAccommodationAvailabilityPeriods
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+      - in: path
+        name: slug
+        required: true
+        schema:
+          type: string
+        description: The slug of the accommodation to retrieve.
+        example: vikendica-na-fruskoj-gori-c4f89d
+      responses:
+        '200':
+          description: Accommodation availability periods retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    startDate:
+                      type: string
+                      format: date
+                      example: 2024-04-01
+                    endDate:
+                      type: string
+                      format: date
+                      example: 2024-04-21
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Request refused due to lack of privileges (e.g. guest account or not the owner)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Accommodation not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+        - accommodations
+        - "1.6"
+      summary: Add a new availability period for an accommodation
+      description: Creates a new availability period for the specified accommodation.
+      operationId: createAvailabilityPeriod
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - startDate
+                - endDate
+              properties:
+                startDate:
+                  type: string
+                  format: date
+                endDate:
+                  type: string
+                  format: date
+      responses:
+        '201':
+          description: Availability period added successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    description: UUID for the newly created availability period.
+                  message:
+                    type: string
+                    description: A message indicating successful creation of the availability period.
+        '400':
+          description: Malformed syntax or data does not pass validations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Request refused due to lack of privileges (e.g. guest account or not the owner)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Refused to update due to business logic (e.g. overlapping periods).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /accommodations/{slug}/availability-periods/{id}:
+    put:
+      tags:
+        - accommodations
+        - "1.6"
+      summary: Update an existing availability period
+      description: Updates the details of an existing availability period for the specified accommodation.
+      operationId: updateAvailabilityPeriod
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - startDate
+                - endDate
+              properties:
+                startDate:
+                  type: string
+                  format: date
+                endDate:
+                  type: string
+                  format: date
+      responses:
+        '200':
+          description: Availability period updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A human-readable description of the message.
+        '400':
+          description: Malformed syntax or data does not pass validations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Request refused due to lack of privileges (e.g. guest account or not the owner)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Accommodation or availability period not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Refused to update due to business logic (e.g. overlapping periods or conflicts with existing reservations).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - accommodations
+        - "1.6"
+      summary: Delete an existing availability period
+      description: Deletes an availability period for the specified accommodation.
+      operationId: deleteAvailabilityPeriod
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Availability period deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A human-readable description of the message.
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Request refused due to lack of privileges (e.g. guest account or not the owner)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Accommodation or availability period not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Refused to delete due to business logic (e.g. conflicts with an existing reservation).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 
 components:
   schemas:
