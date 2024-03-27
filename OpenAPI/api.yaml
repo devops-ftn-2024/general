@@ -581,6 +581,8 @@ paths:
                 - photos
                 - minGuests
                 - maxGuests
+                - priceType
+                - autoConfirm
               properties:
                 name:
                   type: string
@@ -610,6 +612,11 @@ paths:
                   type: integer
                   description: Maximum number of guests that can be accommodated.
                   example: 5
+                priceType:
+                  type: string
+                  enum: [perGuest, perStay]
+                autoConfirm:
+                  type: boolean
       responses:
         '201':
           description: Accommodation created successfully.
@@ -738,6 +745,9 @@ paths:
               schema:
                 type: object
                 properties:
+                  id:
+                    type: string
+                    format: uuid
                   name:
                     type: string
                     example: "Vikendica na Fruškoj Gori"
@@ -790,7 +800,7 @@ paths:
         example: vikendica-na-fruskoj-gori-c4f89d
       responses:
         '200':
-          description: Availability slots of given accommodation.
+          description: Availability slots of given accommodation retrieved successfully.
           content:
             application/json:
               schema:
@@ -999,6 +1009,9 @@ paths:
       summary: Update an existing availability period
       description: Updates the details of an existing availability period for the specified accommodation.
       operationId: updateAvailabilityPeriod
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
       parameters:
         - in: path
           name: slug
@@ -1081,6 +1094,9 @@ paths:
       summary: Delete an existing availability period
       description: Deletes an availability period for the specified accommodation.
       operationId: deleteAvailabilityPeriod
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
       parameters:
         - in: path
           name: slug
@@ -1134,7 +1150,528 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
+  /reservations:
+    get:
+      tags:
+        - reservations
+        - "1.8"
+      summary: Retrieve current user's reservations
+      description: Retrieves details about current user's reservations including reservation status.
+      operationId: getReservations
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - in: query
+          name: status
+          required: false
+          schema:
+            type: string
+            enum: [pending, accepted, rejected, completed, cancelled]
+      responses:
+        '200':
+          description: Reservations retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    startDate:
+                      type: string
+                      format: date
+                    endDate:
+                      type: string
+                      format: date
+                    status:
+                      type: string
+                      enum: [pending, accepted, rejected, completed, cancelled, deleted]
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Request refused due to lack of privileges (e.g. host account)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+        - reservations
+        - "1.8"
+      summary: Create a new reservation request for current user
+      description: Creates a new reservation request for current user with specified details including accommodation, start and end date of the reservation and number of guests.
+      operationId: createReservation
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - accommodationId
+                - startDate
+                - endDate
+                - guests
+              properties:
+                accommodationId:
+                  type: string
+                  format: uuid
+                startDate:
+                  type: string
+                  format: date
+                endDate:
+                  type: string
+                  format: date
+                guests:
+                  type: integer
+                  example: 2
+      responses:
+        '201':
+          description: Reservation request created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    description: ID of the newly created reservation request.
+                  message:
+                    type: string
+                    description: A message indicating successful creation of the accommodation.
+        '400':
+          description: Malformed syntax or data does not pass validations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Request refused due to lack of privileges (e.g. host account)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Refused to create reservation request due to business logic (e.g. overlapping reservation).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /reservations/{id}:
+    delete:
+      tags:
+        - reservations
+        - "1.8"
+      summary: Delete a pending reservation request
+      description: Deletes the specified reservation that is in pending state.
+      operationId: deleteReservation
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Reservation request deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A human-readable description of the message.
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Request refused due to lack of privileges (e.g. host account)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Reservation request not found (or reservation does not belong to the current user).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Refused to delete due to business logic (e.g. reservation not in pending state).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /reservations/{id}/cancellation:
+    post:
+      tags:
+        - reservations
+        - "1.9"
+      summary: Cancel accepted reservation
+      description: Sets status to `cancelled` of the specified reservation that is in `accepted` state.
+      operationId: cancelReservation
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Reservation request cancelled successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A human-readable description of the message.
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Request refused due to lack of privileges (e.g. host account)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Reservation request not found (or reservation does not belong to the current user).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Refused to delete due to business logic (e.g. reservation starts tomorrow).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /reservations/{id}/confirmation:
+    post:
+      tags:
+        - reservations
+        - "1.10"
+      summary: Confirm pending reservation
+      description: Sets status to `accepted` of the specified reservation that is in `pending` state.
+      operationId: acceptReservation
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Reservation request accepted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A human-readable description of the message.
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Request refused due to lack of privileges (e.g. guest account)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Reservation request not found (or accommodation does not belong to the current user).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Refused to delete due to business logic (idk what is might be).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /accommodations/{slug}/reservations:
+    get:
+      tags:
+        - reservations
+        - "1.10"
+      summary: Retrieve reservations for a specified accommodation
+      description: Retrieves details about reservations for a specified accommodation including reservation status and guest information.
+      operationId: getReservationsForAccommodation
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+          description: The slug of the accommodation to retrieve.
+          example: vikendica-na-fruskoj-gori-c4f89d
+        - in: query
+          name: status
+          required: false
+          schema:
+            type: string
+            enum: [pending, accepted, rejected, completed, cancelled]
+      responses:
+        '200':
+          description: Reservations retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    user:
+                      type: object
+                      properties:
+                        username:
+                          type: string
+                          example: john
+                        fullName:
+                          type: string
+                          example: John Doe
+                        cancellations:
+                          type: integer
+                    startDate:
+                      type: string
+                      format: date
+                    endDate:
+                      type: string
+                      format: date
+                    status:
+                      type: string
+                      enum: [pending, accepted, rejected, completed, cancelled, deleted]
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Request refused due to lack of privileges (e.g. host account or not the owner)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Accommodation not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /accommodations/{slug}/auto-confirm:
+    get:
+      tags:
+        - accommodations
+        - "1.10"
+      summary: Retrieve current auto-confirm value for the specified accommodation.
+      description: Retrieves current automatic confirmation value for the specified accommodation.
+      operationId: getAccommodationAutoConfirm
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Auto-confirm value retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  enabled:
+                    type: boolean
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Request refused due to lack of privileges (e.g. guest account or not the owner)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Accommodation not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+        - accommodations
+        - "1.10"
+      summary: Toggle auto-confirm for the specified accommodation.
+      description: Turns automatic confirmation on and off for the specified accommodation.
+      operationId: setAccommodationAutoConfirm
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - enabled
+              properties:
+                enabled:
+                  type: boolean
+                  format: date
+      responses:
+        '200':
+          description: Auto-confirm updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A message indicating successful update.
+        '400':
+          description: Malformed syntax or data does not pass validations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Request refused due to lack of privileges (e.g. guest account or not the owner)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Accommodation not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Refused to update due to business logic (e.g. overlapping reservation requests should be resolved first before enabling auto-confirm).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
 components:
   schemas:
