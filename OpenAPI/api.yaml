@@ -13,6 +13,10 @@ tags:
     description: Operations related to accommodation management and browsing
   - name: reservations
     description: Operations related to reservations
+  - name: reviews
+    description: Operations related to reviews
+  - name: notifications
+    description: Operations related to notifications
 
   
   - name: "1.1"
@@ -682,7 +686,7 @@ paths:
                     format: binary
       responses:
         '201':
-          description: Pictures uploaded successfully.
+          description: Photos uploaded successfully.
           content:
             application/json:
               schema:
@@ -711,6 +715,56 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '403':
           description: Request refused due to lack of privileges
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /accommodations/photos/{uuid}:
+    get:
+      tags:
+        - accommodations
+        - "1.5"
+      summary: Get a photo by ID
+      description: Serves a photo by its UUID
+      operationId: getPhoto
+      parameters:
+        - in: path
+          name: uuid
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Photo retrieved successfully.
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: Indicates whether the content is in JPEG or PNG format.
+        '400':
+          description: Invalid UUID format.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Photo not found.
           content:
             application/json:
               schema:
@@ -1668,6 +1722,832 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /hosts/{username}/reviews/average:
+    get:
+      tags:
+        - reviews
+        - "1.11"
+      summary: Get average rating for a host
+      description: Calculates and retrieves average rating for a host.
+      operationId: getAverageHostRating
+      parameters:
+        - in: path
+          name: username
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Average retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  average:
+                    type: number
+                    example: 4.33
+        '404':
+          description: Host not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /hosts/{username}/reviews:
+    get:
+      tags:
+        - reviews
+        - "1.11"
+      summary: Get all reviews
+      description: Retrieves all previous reviews for a host.
+      operationId: getHostReviews
+      parameters:
+        - in: path
+          name: username
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Reviews retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    username:
+                      type: string
+                    rating:
+                      type: integer
+                    date:
+                      type: string
+                      format: date
+              example:
+                - username: 'alice'
+                  rating: 5
+                  date: '2024-04-01'
+                - username: 'bob'
+                  rating: 4
+                  date: '2024-04-02'
+                - username: 'carol'
+                  rating: 4
+                  date: '2024-04-03'
+        '404':
+          description: Host not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+        - reviews
+        - "1.11"
+      summary: Leave a review for host
+      description: Creates a new review for a host.
+      operationId: createHostReview
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: username
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Star rating
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - rating
+              properties:
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+      responses:
+        '200':
+          description: Review added successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A human-readable description of the message.
+        '400':
+          description: Malformed syntax or data does not pass validations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Request refused due to lack of privileges (e.g. host account)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Host not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Refused to update due to business logic (e.g. guest had no reservations at this host).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+        - reviews
+        - "1.11"
+      summary: Update review for a host
+      description: Updates an existing review for a host.
+      operationId: updateHostReview
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: username
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Star rating
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - rating
+              properties:
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+      responses:
+        '200':
+          description: Review updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A human-readable description of the message.
+        '400':
+          description: Malformed syntax or data does not pass validations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Request refused due to lack of privileges (e.g. host account)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Review or host not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Refused to update due to business logic (e.g. guest had no reservations at this host).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - reviews
+        - "1.11"
+      summary: Delete review for a host
+      description: Deletes an existing review for a host.
+      operationId: deleteHostReview
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: username
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Review deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A human-readable description of the message.
+        '400':
+          description: Malformed syntax or data does not pass validations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Request refused due to lack of privileges (e.g. host account)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Review or host not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /accommodations/{slug}/reviews/average:
+    get:
+      tags:
+        - reviews
+        - "1.12"
+      summary: Get average rating for an accommodation
+      description: Calculates and retrieves average rating for an accommodation.
+      operationId: getAverageAccommodationRating
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Average retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  average:
+                    type: number
+                    example: 4.33
+        '404':
+          description: Host not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /accommodations/{slug}/reviews:
+    get:
+      tags:
+        - reviews
+        - "1.12"
+      summary: Get all reviews
+      description: Retrieves all previous reviews for an accommodation.
+      operationId: getAccommodationReviews
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Reviews retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    username:
+                      type: string
+                    rating:
+                      type: integer
+                    date:
+                      type: string
+                      format: date
+              example:
+                - username: 'alice'
+                  rating: 5
+                  date: '2024-04-01'
+                - username: 'bob'
+                  rating: 4
+                  date: '2024-04-02'
+                - username: 'carol'
+                  rating: 4
+                  date: '2024-04-03'
+        '404':
+          description: Host not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+        - reviews
+        - "1.12"
+      summary: Leave a review for accommodation
+      description: Creates a new review for an accommodation.
+      operationId: createAccommodationReview
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Star rating
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - rating
+              properties:
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+      responses:
+        '200':
+          description: Review added successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A human-readable description of the message.
+        '400':
+          description: Malformed syntax or data does not pass validations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Request refused due to lack of privileges (e.g. host account)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Host not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Refused to update due to business logic (e.g. guest had no reservations at this accommodation).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+        - reviews
+        - "1.12"
+      summary: Update review for an accommodation
+      description: Updates an existing review for an accommodation.
+      operationId: updateAccommodationReview
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Star rating
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - rating
+              properties:
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+      responses:
+        '200':
+          description: Review updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A human-readable description of the message.
+        '400':
+          description: Malformed syntax or data does not pass validations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Request refused due to lack of privileges (e.g. host account)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Review or accommodation not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Refused to update due to business logic (e.g. guest had no reservations at this accommodation).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - reviews
+        - "1.12"
+      summary: Delete review for an accommodation
+      description: Deletes an existing review for an accommodation.
+      operationId: deleteAccommodationReview
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Review deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A human-readable description of the message.
+        '400':
+          description: Malformed syntax or data does not pass validations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Request refused due to lack of privileges (e.g. host account)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Review or accommodation not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /notifications:
+    get:
+      tags:
+        - notifications
+        - "1.13"
+      summary: Retrieve all notifications
+      description: Retrieves all notifications
+      operationId: getAllNotifications
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Notifications retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                    datetime:
+                      type: string
+                      format: date-time
+                    state:
+                      type: string
+                      enum: [unread, read]
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /notifications/unread:
+    get:
+      tags:
+        - notifications
+        - "1.13"
+      summary: Retrieve all unread notifications
+      description: Retrieves all unread notifications
+      operationId: getAllUnreadNotifications
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Notifications retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                    datetime:
+                      type: string
+                      format: date-time
+                    state:
+                      type: string
+                      enum: [unread, read]
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /notifications/read-all:
+    patch:
+      tags:
+        - notifications
+        - "1.13"
+      summary: Mark all unread notifications as read
+      description: Marks all unread notification as read.
+      operationId: markAllNotificationsAsRead
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        '200':
+          description: All notifications marked as read
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: A human-readable description of the message.
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /notifications/settings:
+    get:
+      tags:
+        - notifications
+        - "1.13"
+      summary: Retrieve notification settings
+      description: Retrieves all notification preferences.
+      operationId: getNotificationSettings
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Notification preferences retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reservationRequestResponse:
+                    type: boolean
+                  reservationRequestCreated:
+                    type: boolean
+                  reservationCancelled:
+                    type: boolean
+                  hostReviewCreated:
+                    type: boolean
+                  accommodationReviewCreated:
+                    type: boolean
+              examples:
+                hostSettings:
+                  summary: Settings for hosts
+                  value:
+                    reservationRequestCreated: true
+                    reservationCancelled: true
+                    hostReviewCreated: false
+                    accommodationReviewCreated: true
+                guestSettings:
+                  summary: Settings for guests
+                  value:
+                    reservationRequestResponse: true
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+        - notifications
+        - "1.13"
+      summary: Update notification settings
+      description: Updates the user's notification preferences.
+      operationId: updateNotificationSettings
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reservationRequestResponse:
+                  type: boolean
+                reservationRequestCreated:
+                  type: boolean
+                reservationCancelled:
+                  type: boolean
+                hostReviewCreated:
+                  type: boolean
+                accommodationReviewCreated:
+                  type: boolean
+            examples:
+              hostSettings:
+                summary: Example settings for hosts
+                value:
+                  reservationRequestCreated: true
+                  reservationCancelled: false
+                  hostReviewCreated: true
+                  accommodationReviewCreated: false
+              guestSettings:
+                summary: Example settings for guests
+                value:
+                  reservationRequestResponse: false
+      responses:
+        '200':
+          description: Notification settings updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Malformed syntax or data does not pass validations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Request refused due to lack of authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error - Something went wrong on the server.
           content:
             application/json:
               schema:
