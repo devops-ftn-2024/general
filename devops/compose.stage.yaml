@@ -1,0 +1,156 @@
+version: '3.7'
+
+services:
+
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - pg-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: some-rabbit
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: rabbitmq-diagnostics check_port_connectivity
+      interval: 1s
+      timeout: 3s
+      retries: 30
+    networks:
+      - pg-network
+
+  accommodation-service:
+    image: dusanlazic/accommodatio-accommodations:1.0.0
+    container_name: accommodation-service
+    ports:
+    - "3003:3003"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+    environment:
+      PORT: 3003
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB_NAME: accommodations
+      MONGO_COLLECTION_NAME: accommodations
+      ALLOWED_ORIGIN: http://localhost:4200
+      RABBITMQ_HOST: some-rabbit
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+    networks:
+      - pg-network
+  
+  user-service:
+    image: dusanlazic/accommodatio-users:1.0.0
+    container_name: user-service
+    ports:
+      - "3002:3002"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+    environment:
+      PORT: 3002
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB_NAME: users
+      MONGO_COLLECTION_NAME: users
+      ALLOWED_ORIGIN: http://localhost:4200
+      RABBITMQ_HOST: some-rabbit
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+    networks:
+      - pg-network
+  
+  availability-service:
+    image: dusanlazic/accommodatio-availabilities:1.0.0
+    container_name: availability-service
+    ports:
+      - "3004:3004"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+    environment:
+      PORT: 3004
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB_NAME: availabilities
+      MONGO_COLLECTION_NAME_ACCOMMODATION: accommodations
+      MONGO_COLLECTION_NAME_RESERVATION: reservations
+      MONGO_COLLECTION_NAME_AVAILABILITY: availabilities
+      ALLOWED_ORIGIN: http://localhost:4200
+      RABBITMQ_HOST: some-rabbit
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+    networks:
+      - pg-network
+
+  api-gateway-service:
+    image: dusanlazic/accommodatio-api-gateway:1.0.0
+    container_name: api-gateway-service
+    ports:
+      - "4200:4200"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+    environment:
+      PORT: 4200
+      USERS_URL: http://user-service:3002
+      AUTH_URL: http://authentication-service:3001
+      ACCOMMODATION_URL: http://accommodation-service:3003
+      AVAILABILITIES_URL: http://availability-service:3004
+      ALLOWED_ORIGIN: http://localhost:3000
+      RABBITMQ_HOST: some-rabbit
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+    networks:
+      - pg-network
+
+  authentication-service:
+    image: dusanlazic/accommodatio-auth:1.0.0
+    container_name: authentication-service
+    ports:
+      - "3001:3001"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+    environment:
+      PORT: 3001
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB_NAME: auth
+      MONGO_COLLECTION_NAME: users
+      SECRET_KEY: secretkey
+      SALT_ROUNDS: 9
+      ALLOWED_ORIGIN: http://localhost:3000,http://localhost:4200
+      RABBITMQ_HOST: some-rabbit
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+    networks:
+      - pg-network
+
+networks:
+  pg-network:
+    driver: bridge
+  
+volumes:
+  mongo-data:
