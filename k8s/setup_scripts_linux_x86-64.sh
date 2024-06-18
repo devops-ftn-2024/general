@@ -9,6 +9,11 @@ setup_minikube() {
     curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
     sudo install minikube-linux-amd64 /usr/local/bin/minikube && rm minikube-linux-amd64
     minikube start
+
+    minikube addons enable ingress
+    echo
+    echo "Append the following line to /etc/hosts file:"
+    echo "$(minikube ip) api.accommodatio.local"
 }
 
 setup_kompose() {
