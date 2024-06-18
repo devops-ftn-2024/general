@@ -8,6 +8,6 @@ elif ! docker-compose version &>/dev/null; then
     exit 1
 fi
 
-$docker_compose -p accommodatio-stage -f compose.dev.yaml down
-$docker_compose -p accommodatio-stage -f compose.dev.yaml build --no-cache
-$docker_compose -p accommodatio-stage -f compose.dev.yaml up
+$docker_compose -p accommodatio-dev -f compose.dev.yaml down
+$docker_compose -p accommodatio-dev -f compose.dev.yaml build --no-cache
+$docker_compose -p accommodatio-dev -f compose.dev.yaml up
