@@ -1,4 +1,8 @@
 #!/bin/bash
+#
+# Run `source setup_scripts_linux_x86-64.sh` to enable command 
+# line functions created in this file.
+
 setup_kubectl() {
     curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
     sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
@@ -24,9 +28,13 @@ setup_kompose() {
 }
 
 apply() {
-    kubectl apply -f $1
+    kubectl apply -R -f $1
 }
 
 delete() {
-    kubectl delete -f $1
+    kubectl delete -R -f $1
+}
+
+pods() {
+    watch -n 1 "kubectl get pods"
 }
