@@ -21,6 +21,3 @@ else
 fi
 
 apply ../k8s/resources
-
-POD_NAME=$(kubectl get pods --selector=io.kompose.service=api-gateway-service --output=jsonpath='{.items[0].metadata.name}')
-echo "When api-gateway pod is up, run 'kubectl port-forward $POD_NAME 4200:4200' to be able to reach it locally."
