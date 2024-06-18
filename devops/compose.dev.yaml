@@ -20,6 +20,11 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: rabbitmq-diagnostics check_port_connectivity
+      interval: 1s
+      timeout: 3s
+      retries: 30
     networks:
       - pg-network
 
@@ -31,8 +36,10 @@ services:
     ports:
     - "3003:3003"
     depends_on:
-      - rabbitmq
-      - mongo
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
     environment:
       PORT: 3003
       MONGO_URI: mongodb://mongo:27017
@@ -54,8 +61,10 @@ services:
     ports:
       - "3002:3002"
     depends_on:
-      - rabbitmq
-      - mongo
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
     environment:
       PORT: 3002
       MONGO_URI: mongodb://mongo:27017
@@ -77,8 +86,10 @@ services:
     ports:
       - "3004:3004"
     depends_on:
-      - rabbitmq
-      - mongo
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
     environment:
       PORT: 3004
       MONGO_URI: mongodb://mongo:27017
@@ -102,8 +113,10 @@ services:
     ports:
       - "4200:4200"
     depends_on:
-      - mongo
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
     environment:
       PORT: 4200
       USERS_URL: http://user-service:3002
@@ -126,8 +139,10 @@ services:
     ports:
       - "3001:3001"
     depends_on:
-      - mongo
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
     environment:
       PORT: 3001
       MONGO_URI: mongodb://mongo:27017
