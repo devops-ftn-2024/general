@@ -103,7 +103,7 @@ services:
       MONGO_COLLECTION_NAME_ACCOMMODATION: accommodations
       MONGO_COLLECTION_NAME_RESERVATION: reservations
       MONGO_COLLECTION_NAME_AVAILABILITY: availabilities
-      ALLOWED_ORIGIN: http://localhost:4200
+      ALLOWED_ORIGIN: http://localhost:4200,http://localhost:3005
       RABBITMQ_HOST: some-rabbit
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
