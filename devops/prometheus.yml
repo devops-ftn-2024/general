@@ -1,0 +1,29 @@
+
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'user-service'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['user-service:3002']
+  - job_name: 'accommodation-service'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['accommodation-service:3003']
+  - job_name: 'reviews-service'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['reviews-service:3005']
+  - job_name: 'availability-service'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['availability-service:3004']
+  - job_name: 'authentication-service'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['authentication-service:3001']
+  - job_name: 'api-gateway-service'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['api-gateway-service:4200']

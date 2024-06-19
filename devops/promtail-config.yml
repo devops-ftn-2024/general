@@ -1,0 +1,53 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: accommodatio-user-service-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: accommodatio-user-service
+          __path__: /logs/accommodatio-user-service-logs/*.log
+  - job_name: accommodatio-accommodation-service-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: accommodatio-accommodation-service
+          __path__: /logs/accommodatio-accommodation-service-logs/*.log
+  - job_name: accommodatio-reviews-service-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: accommodatio-reviews-service
+          __path__: /logs/accommodatio-reviews-service-logs/*.log
+  - job_name: accommodatio-availability-service-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: accommodatio-availability-service
+          __path__: /logs/accommodatio-availability-service-logs/*.log
+  - job_name: accommodatio-authentication-service-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: accommodatio-authentication-service
+          __path__: /logs/accommodatio-authentication-service-logs/*.log
+  - job_name: accommodatio-api-gateway-service-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: accommodatio-api-gateway-service
+          __path__: /logs/accommodatio-api-gateway-service-logs/*.log
