@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: {{ .Values.reviews.name }}
+  name: {{ .Values.reviews.name }}
+spec:
+  ports:
+    - name: "{{ .Values.reviews.containerPort }}"
+      port: {{ .Values.reviews.containerPort }}
+      targetPort: {{ .Values.reviews.containerPort }}
+  selector:
+    app: {{ .Values.reviews.name }}

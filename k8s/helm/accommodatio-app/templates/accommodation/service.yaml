@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: {{ .Values.accommodation.name | default "accommodation-service" }}
+  name: {{ .Values.accommodation.name | default "accommodation-service" }}
+spec:
+  ports:
+    - name: "{{ .Values.accommodation.containerPort }}"
+      port: {{ .Values.accommodation.containerPort }}
+      targetPort: {{ .Values.accommodation.containerPort }}
+  selector:
+    app: {{ .Values.accommodation.name | default "accommodation-service" }}

@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: {{ .Values.rabbitmq.name | default "rabbitmq" }}
+  name: {{ .Values.rabbitmq.name | default "rabbitmq" }}
+spec:
+  ports:
+    - name: "5672"
+      port: {{ index .Values.rabbitmq.containerPorts 0 | default 5672 }}
+      targetPort: 5672
+    - name: "15672"
+      port: {{ index .Values.rabbitmq.containerPorts 1 | default 15672 }}
+      targetPort: 15672
+  selector:
+    app: {{ .Values.rabbitmq.name | default "rabbitmq" }}

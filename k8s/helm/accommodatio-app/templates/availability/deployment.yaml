@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ .Values.availability.name | default "availability-service" }}
+  name: {{ .Values.availability.name | default "availability-service" }}
+spec:
+  replicas: {{ .Values.availability.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.availability.name | default "availability-service" }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.availability.name | default "availability-service" }}
+    spec:
+      containers:
+        - env:
+            - name: ALLOWED_ORIGIN
+              value: {{ .Values.availability.env.allowedOrigin }}
+            - name: MONGO_COLLECTION_NAME_ACCOMMODATION
+              value: {{ .Values.availability.env.mongoCollectionNameAccommodation }}
+            - name: MONGO_COLLECTION_NAME_AVAILABILITY
+              value: {{ .Values.availability.env.mongoCollectionNameAvailability }}
+            - name: MONGO_COLLECTION_NAME_RESERVATION
+              value: {{ .Values.availability.env.mongoCollectionNameReservation }}
+            - name: MONGO_DB_NAME
+              value: {{ .Values.availability.env.mongoDbName }}
+            - name: MONGO_URI
+              value: {{ .Values.global.mongoUri }}
+            - name: PORT
+              value: "{{ .Values.availability.containerPort }}"
+            - name: RABBITMQ_HOST
+              value: {{ .Values.global.rabbitmq.host }}
+            - name: RABBITMQ_PASSWORD
+              value: {{ .Values.global.rabbitmq.password }}
+            - name: RABBITMQ_PORT
+              value: "{{ .Values.global.rabbitmq.port }}"
+            - name: RABBITMQ_USERNAME
+              value: {{ .Values.global.rabbitmq.username }}
+          image: {{ .Values.availability.image.repository }}:{{ .Values.availability.image.tag }}
+          name: {{ .Values.availability.name | default "availability-service" }}
+          ports:
+            - containerPort: {{ .Values.availability.containerPort }}
+              protocol: TCP
+      restartPolicy: Always

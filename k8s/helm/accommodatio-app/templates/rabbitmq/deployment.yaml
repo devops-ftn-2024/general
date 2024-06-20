@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ .Values.rabbitmq.name | default "rabbitmq" }}
+  name: {{ .Values.rabbitmq.name | default "rabbitmq" }}
+spec:
+  replicas: {{ .Values.rabbitmq.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.rabbitmq.name | default "rabbitmq" }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.rabbitmq.name | default "rabbitmq" }}
+    spec:
+      containers:
+        - env:
+            - name: RABBITMQ_DEFAULT_PASS
+              value: {{ .Values.global.rabbitmq.password | default "guest" }}
+            - name: RABBITMQ_DEFAULT_USER
+              value: {{ .Values.global.rabbitmq.username | default "guest" }}
+          image: {{ .Values.rabbitmq.image.repository }}:{{ .Values.rabbitmq.image.tag | default "3-management" }}
+          command: 
+            [
+              "bash",
+              "-c",
+              "chmod 400 /var/lib/rabbitmq/.erlang.cookie; rabbitmq-server"
+            ]
+          livenessProbe:
+            exec:
+              command: ['rabbitmq-diagnostics', 'check_port_connectivity']
+            failureThreshold: 30
+            periodSeconds: 1
+            timeoutSeconds: 3
+          name: {{ .Values.rabbitmq.containerName | default "some-rabbit" }}
+          ports:
+            - containerPort: {{ index .Values.rabbitmq.containerPorts 0 | default 5672 }}
+              protocol: TCP
+            - containerPort: {{ index .Values.rabbitmq.containerPorts 1 | default 15672 }}
+              protocol: TCP
+      restartPolicy: Always

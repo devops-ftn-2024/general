@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: {{ .Values.mongo.name | default "mongo-data" }}
+  name: {{ .Values.mongo.persistentVolume.name | default "mongo-data" }}
+spec:
+  accessModes:
+    - {{ .Values.mongo.persistentVolume.accessMode | default "ReadWriteOnce" }}
+  resources:
+    requests:
+      storage: {{ .Values.mongo.persistentVolume.size | default "100Mi" }}

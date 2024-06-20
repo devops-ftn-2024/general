@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ .Values.authentication.name | default "authentication-service" }}
+  name: {{ .Values.authentication.name | default "authentication-service" }}
+spec:
+  replicas: {{ .Values.authentication.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.authentication.name | default "authentication-service" }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.authentication.name | default "authentication-service" }}
+    spec:
+      containers:
+        - env:
+            - name: ALLOWED_ORIGIN
+              value: {{ .Values.authentication.env.allowedOrigin }}
+            - name: MONGO_COLLECTION_NAME
+              value: {{ .Values.authentication.env.mongoCollectionName }}
+            - name: MONGO_DB_NAME
+              value: {{ .Values.authentication.env.mongoDbName }}
+            - name: MONGO_URI
+              value: {{ .Values.global.mongoUri }}
+            - name: PORT
+              value: "{{ .Values.authentication.containerPort }}"
+            - name: RABBITMQ_HOST
+              value: {{ .Values.global.rabbitmq.host }}
+            - name: RABBITMQ_PASSWORD
+              value: {{ .Values.global.rabbitmq.password }}
+            - name: RABBITMQ_PORT
+              value: "{{ .Values.global.rabbitmq.port }}"
+            - name: RABBITMQ_USERNAME
+              value: {{ .Values.global.rabbitmq.username }}
+            - name: SALT_ROUNDS
+              value: "{{ .Values.authentication.env.saltRounds }}"
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: secretKey
+          image: {{ .Values.authentication.image.repository }}:{{ .Values.authentication.image.tag }}
+          name: {{ .Values.authentication.name | default "authentication-service" }}
+          ports:
+            - containerPort: {{ .Values.authentication.containerPort }}
+              protocol: TCP
+      restartPolicy: Always

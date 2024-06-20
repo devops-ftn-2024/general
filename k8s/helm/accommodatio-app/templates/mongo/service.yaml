@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: {{ .Values.mongo.name | default "mongo" }}
+  name: {{ .Values.mongo.name | default "mongo" }}
+spec:
+  ports:
+    - name: "{{ .Values.mongo.containerPort | default 27017 }}"
+      port: {{ .Values.mongo.containerPort | default 27017 }}
+      targetPort: {{ .Values.mongo.containerPort | default 27017 }}
+  selector:
+    app: {{ .Values.mongo.name | default "mongo" }}

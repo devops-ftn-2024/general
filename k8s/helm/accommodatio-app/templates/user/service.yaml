@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: {{ .Values.user.name | default "user-service" }}
+  name: {{ .Values.user.name | default "user-service" }}
+spec:
+  ports:
+    - name: "{{ .Values.user.containerPort }}"
+      port: {{ .Values.user.containerPort }}
+      targetPort: {{ .Values.user.containerPort }}
+  selector:
+    app: {{ .Values.user.name | default "user-service" }}
