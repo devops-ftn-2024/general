@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ .Values.apiGateway.name }}
+  name: {{ .Values.apiGateway.name }}
+spec:
+  replicas: {{ .Values.apiGateway.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.apiGateway.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.apiGateway.name }}
+    spec:
+      containers:
+        - name: {{ .Values.apiGateway.name }}
+          image: {{ .Values.apiGateway.image.repository }}:{{ .Values.apiGateway.image.tag }}
+          ports:
+            - containerPort: {{ .Values.apiGateway.containerPort }}
+              protocol: TCP
+          env:
+            - name: ALLOWED_ORIGIN
+              value: {{ .Values.apiGateway.env.allowedOrigin }}
+            - name: ACCOMMODATION_URL
+              value: {{ .Values.apiGateway.env.accommodationUrl }}
+            - name: AUTH_URL
+              value: {{ .Values.apiGateway.env.authUrl }}
+            - name: AVAILABILITIES_URL
+              value: {{ .Values.apiGateway.env.availabilitiesUrl }}
+            - name: USERS_URL
+              value: {{ .Values.apiGateway.env.usersUrl }}
+            - name: PORT
+              value: "{{ .Values.apiGateway.containerPort }}"
+            - name: RABBITMQ_HOST
+              value: {{ .Values.global.rabbitmq.host }}
+            - name: RABBITMQ_PASSWORD
+              value: {{ .Values.global.rabbitmq.password }}
+            - name: RABBITMQ_PORT
+              value: "{{ .Values.global.rabbitmq.port }}"
+            - name: RABBITMQ_USERNAME
+              value: {{ .Values.global.rabbitmq.username }}
+      restartPolicy: Always

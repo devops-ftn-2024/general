@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ .Values.user.name | default "user-service" }}
+  name: {{ .Values.user.name | default "user-service" }}
+spec:
+  replicas: {{ .Values.user.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.user.name | default "user-service" }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.user.name | default "user-service" }}
+    spec:
+      containers:
+        - env:
+            - name: ALLOWED_ORIGIN
+              value: {{ .Values.user.env.allowedOrigin }}
+            - name: MONGO_COLLECTION_NAME
+              value: {{ .Values.user.env.mongoCollectionName }}
+            - name: MONGO_DB_NAME
+              value: {{ .Values.user.env.mongoDbName }}
+            - name: MONGO_URI
+              value: {{ .Values.global.mongoUri }}
+            - name: PORT
+              value: "{{ .Values.user.containerPort }}"
+            - name: RABBITMQ_HOST
+              value: {{ .Values.global.rabbitmq.host }}
+            - name: RABBITMQ_PASSWORD
+              value: {{ .Values.global.rabbitmq.password }}
+            - name: RABBITMQ_PORT
+              value: "{{ .Values.global.rabbitmq.port }}"
+            - name: RABBITMQ_USERNAME
+              value: {{ .Values.global.rabbitmq.username }}
+          image: {{ .Values.user.image.repository }}:{{ .Values.user.image.tag }}
+          name: {{ .Values.user.name | default "user-service" }}
+          ports:
+            - containerPort: {{ .Values.user.containerPort }}
+              protocol: TCP
+      restartPolicy: Always

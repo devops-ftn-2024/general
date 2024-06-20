@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ .Values.reviews.name }}
+  name: {{ .Values.reviews.name }}
+spec:
+  replicas: {{ .Values.reviews.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.reviews.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.reviews.name }}
+    spec:
+      containers:
+        - name: {{ .Values.reviews.name }}
+          image: {{ .Values.reviews.image.repository }}:{{ .Values.reviews.image.tag }}
+          ports:
+            - containerPort: {{ .Values.reviews.containerPort }}
+          env:
+            - name: PORT
+              value: "{{ .Values.reviews.containerPort }}"
+            - name: MONGO_URI
+              value: {{ .Values.global.mongoUri }}
+            - name: MONGO_DB_NAME
+              value: {{ .Values.reviews.env.mongoDbName }}
+            - name: MONGO_COLLECTION_NAME
+              value: {{ .Values.reviews.env.mongoCollectionName }}
+            - name: ALLOWED_ORIGIN
+              value: {{ .Values.reviews.env.allowedOrigin }}
+            - name: RESERVATIONS_URL
+              value: {{ .Values.reviews.env.reservationsUrl }}
+            - name: RABBITMQ_HOST
+              value: {{ .Values.global.rabbitmq.host }}
+            - name: RABBITMQ_PORT
+              value: "{{ .Values.global.rabbitmq.port }}"
+            - name: RABBITMQ_USERNAME
+              value: {{ .Values.global.rabbitmq.username }}
+            - name: RABBITMQ_PASSWORD
+              value: {{ .Values.global.rabbitmq.password }}
+      restartPolicy: Always

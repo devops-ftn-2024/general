@@ -1,0 +1,128 @@
+global:
+  mongoUri: mongodb://mongo:27017
+  rabbitmq:
+    host: some-rabbit
+    username: guest
+    password: guest
+    port: "5672"
+    managementPort: "15672"
+
+ingress:
+  enabled: true
+  hosts:
+    - host: "api.accommodatio.local"
+  paths: ["/"]
+  tls: false
+
+mongo:
+  replicaCount: 1
+  image:
+    repository: mongo
+    tag: latest
+  persistentVolume:
+    accessMode: ReadWriteOnce
+    size: 100Mi
+  containerPort: 27017
+
+rabbitmq:
+  replicaCount: 1
+  image:
+    repository: rabbitmq
+    tag: "3-management"
+  containerPorts:
+    - 5672
+    - 15672
+
+authentication:
+  replicaCount: 1
+  image:
+    repository: dusanlazic/accommodatio-auth
+    tag: 1.0.0
+  containerPort: 3001
+  env:
+    allowedOrigin: "http://localhost:3000,http://localhost:4200"
+    mongoCollectionName: "users"
+    mongoDbName: "auth"
+    saltRounds: "9"
+
+accommodation:
+  replicaCount: 1
+  image:
+    repository: dusanlazic/accommodatio-auth
+    tag: 1.0.0
+  containerPort: 3003
+  env:
+    allowedOrigin: "http://localhost:4200"
+    mongoCollectionName: "accommodations"
+    mongoDbName: "accommodations"
+    saltRounds: "9"
+
+apiGateway:
+  name: api-gateway-service
+  replicaCount: 1
+  image:
+    repository: dusanlazic/accommodatio-api-gateway
+    tag: 1.0.0
+  containerPort: 4200
+  ingress:
+    enabled: true
+    host: api.accommodatio.local
+    path: "/"
+    tls: false 
+  env:
+    accommodationUrl: "http://accommodation-service:3003"
+    authUrl: "http://authentication-service:3001"
+    availabilitiesUrl: "http://availability-service:3004"
+    usersUrl: "http://user-service:3002"
+    allowedOrigin: "http://localhost:3000"
+
+availability:
+  replicaCount: 1
+  image:
+    repository: dusanlazic/accommodatio-availabilities
+    tag: 1.0.0
+  containerPort: 3004
+  env:
+    allowedOrigin: "http://localhost:4200"
+    mongoCollectionNameAccommodation: "accommodations"
+    mongoCollectionNameAvailability: "availabilities"
+    mongoCollectionNameReservation: "reservations"
+    mongoDbName: "availabilities"
+
+user:
+  replicaCount: 1
+  image:
+    repository: dusanlazic/accommodatio-users
+    tag: 1.0.0
+  containerPort: 3002
+  env:
+    allowedOrigin: "http://localhost:4200"
+    mongoCollectionName: "users"
+    mongoDbName: "users"
+
+
+notifications:
+  name: notifications-service
+  replicaCount: 1
+  image:
+    repository: dusanlazic/accommodatio-notifications
+    tag: 1.0.0
+  containerPort: 3006
+  env:
+    mongoDbName: notifications
+    mongoCollectionName: notifications
+    allowedOrigin: http://localhost:4200
+
+
+reviews:
+  name: reviews-service
+  replicaCount: 1
+  image:
+    repository: dusanlazic/accommodatio-reviews
+    tag: 1.0.0
+  containerPort: 3005
+  env:
+    mongoDbName: reviews
+    mongoCollectionName: reviews
+    allowedOrigin: http://localhost:4200
+    reservationsUrl: http://availability-service:3004/reservations

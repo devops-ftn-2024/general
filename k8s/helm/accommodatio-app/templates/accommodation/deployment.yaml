@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ .Values.accommodation.name | default "accommodation-service" }}
+  name: {{ .Values.accommodation.name | default "accommodation-service" }}
+spec:
+  replicas: {{ .Values.accommodation.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.accommodation.name | default "accommodation-service" }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.accommodation.name | default "accommodation-service" }}
+    spec:
+      containers:
+        - env:
+            - name: ALLOWED_ORIGIN
+              value: {{ .Values.accommodation.env.allowedOrigin }}
+            - name: MONGO_COLLECTION_NAME
+              value: {{ .Values.accommodation.env.mongoCollectionName }}
+            - name: MONGO_DB_NAME
+              value: {{ .Values.accommodation.env.mongoDbName }}
+            - name: MONGO_URI
+              value: {{ .Values.global.mongoUri }}
+            - name: PORT
+              value: "{{ .Values.accommodation.containerPort }}"
+            - name: RABBITMQ_HOST
+              value: {{ .Values.global.rabbitmq.host }}
+            - name: RABBITMQ_PASSWORD
+              value: {{ .Values.global.rabbitmq.password }}
+            - name: RABBITMQ_PORT
+              value: "{{ .Values.global.rabbitmq.port }}"
+            - name: RABBITMQ_USERNAME
+              value: {{ .Values.global.rabbitmq.username }}
+            - name: SALT_ROUNDS
+              value: "{{ .Values.accommodation.env.saltRounds }}"
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: secretKey
+          image: {{ .Values.accommodation.image.repository }}:{{ .Values.accommodation.image.tag }}
+          name: {{ .Values.accommodation.name | default "accommodation-service" }}
+          ports:
+            - containerPort: {{ .Values.accommodation.containerPort }}
+              protocol: TCP
+      restartPolicy: Always

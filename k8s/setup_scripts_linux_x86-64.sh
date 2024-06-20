@@ -27,6 +27,10 @@ setup_kompose() {
     kompose version
 }
 
+setup_helm() {
+    curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+}
+
 apply() {
     kubectl apply -R -f $1
 }
