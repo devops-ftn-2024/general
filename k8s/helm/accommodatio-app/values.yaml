@@ -2,17 +2,26 @@ global:
   mongoUri: mongodb://mongo:27017
   rabbitmq:
     host: some-rabbit
-    username: guest
-    password: guest
+    username: guest1
+    password: guest1
     port: "5672"
     managementPort: "15672"
 
 ingress:
   enabled: true
   hosts:
-    - host: "api.accommodatio.local"
+    api: "api.konak.local"
+    auth: "auth.konak.local"
+    web: "konak.local"
   paths: ["/"]
   tls: false
+
+frontend:
+  path: /
+  name: frontend-server
+  containerPort: 80
+  configMapName: frontend-config
+  distPath: /mnt/frontend-dist
 
 mongo:
   replicaCount: 1
@@ -34,25 +43,29 @@ rabbitmq:
     - 15672
 
 authentication:
+  name: authentication-service
   replicaCount: 1
   image:
     repository: dusanlazic/accommodatio-auth
     tag: 1.0.0
   containerPort: 3001
+  ingress:
+    enabled: true
+    path: "/auth"
+    tls: false 
   env:
-    allowedOrigin: "http://localhost:3000,http://localhost:4200"
     mongoCollectionName: "users"
     mongoDbName: "auth"
     saltRounds: "9"
 
 accommodation:
+  name: accommodation-service
   replicaCount: 1
   image:
     repository: dusanlazic/accommodatio-auth
     tag: 1.0.0
   containerPort: 3003
   env:
-    allowedOrigin: "http://localhost:4200"
     mongoCollectionName: "accommodations"
     mongoDbName: "accommodations"
     saltRounds: "9"
@@ -66,7 +79,6 @@ apiGateway:
   containerPort: 4200
   ingress:
     enabled: true
-    host: api.accommodatio.local
     path: "/"
     tls: false 
   env:
@@ -74,7 +86,6 @@ apiGateway:
     authUrl: "http://authentication-service:3001"
     availabilitiesUrl: "http://availability-service:3004"
     usersUrl: "http://user-service:3002"
-    allowedOrigin: "http://localhost:3000"
 
 availability:
   replicaCount: 1
@@ -83,7 +94,6 @@ availability:
     tag: 1.0.0
   containerPort: 3004
   env:
-    allowedOrigin: "http://localhost:4200"
     mongoCollectionNameAccommodation: "accommodations"
     mongoCollectionNameAvailability: "availabilities"
     mongoCollectionNameReservation: "reservations"
@@ -96,7 +106,6 @@ user:
     tag: 1.0.0
   containerPort: 3002
   env:
-    allowedOrigin: "http://localhost:4200"
     mongoCollectionName: "users"
     mongoDbName: "users"
 
@@ -124,5 +133,4 @@ reviews:
   env:
     mongoDbName: reviews
     mongoCollectionName: reviews
-    allowedOrigin: http://localhost:4200
     reservationsUrl: http://availability-service:3004/reservations

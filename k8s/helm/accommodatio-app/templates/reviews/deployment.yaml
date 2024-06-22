@@ -29,7 +29,7 @@ spec:
             - name: MONGO_COLLECTION_NAME
               value: {{ .Values.reviews.env.mongoCollectionName }}
             - name: ALLOWED_ORIGIN
-              value: {{ .Values.reviews.env.allowedOrigin }}
+              value: "http://localhost:1337"
             - name: RESERVATIONS_URL
               value: {{ .Values.reviews.env.reservationsUrl }}
             - name: RABBITMQ_HOST

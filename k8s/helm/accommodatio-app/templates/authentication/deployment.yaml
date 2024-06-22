@@ -17,7 +17,7 @@ spec:
       containers:
         - env:
             - name: ALLOWED_ORIGIN
-              value: {{ .Values.authentication.env.allowedOrigin }}
+              value: http://{{ .Values.ingress.hosts.web }}
             - name: MONGO_COLLECTION_NAME
               value: {{ .Values.authentication.env.mongoCollectionName }}
             - name: MONGO_DB_NAME

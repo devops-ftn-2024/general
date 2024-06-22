@@ -2,13 +2,18 @@
 
 set -e
 
+echo "Building frontend..."
+# cd /home/s4ndu/FTN/DevOps/frontend
+# npm ci
+# npm run build
+# cd -
+
 if ! minikube status > /dev/null 2>&1; then
     echo "Starting Minikube..."
     minikube start
 else
     echo "Minikube is already running."
 fi
-
 
 echo "Enabling Ingress addon..."
 minikube addons enable ingress
@@ -26,3 +31,6 @@ echo "Deploying Helm chart..."
 helm install release ./accommodatio-app --set global.minikubeIp=$MINIKUBE_IP --namespace $NAMESPACE
 
 echo "Deployment complete"
+
+echo "Mounting frontend..."
+minikube mount /home/s4ndu/FTN/DevOps/frontend/dist:/mnt/frontend-dist

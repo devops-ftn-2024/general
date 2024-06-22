@@ -22,7 +22,7 @@ spec:
               protocol: TCP
           env:
             - name: ALLOWED_ORIGIN
-              value: {{ .Values.apiGateway.env.allowedOrigin }}
+              value: http://{{ .Values.ingress.hosts.web }}
             - name: ACCOMMODATION_URL
               value: {{ .Values.apiGateway.env.accommodationUrl }}
             - name: AUTH_URL
