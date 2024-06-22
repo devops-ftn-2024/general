@@ -17,7 +17,7 @@ spec:
       containers:
         - env:
             - name: ALLOWED_ORIGIN
-              value: {{ .Values.availability.env.allowedOrigin }}
+              value: "http://localhost:1337"
             - name: MONGO_COLLECTION_NAME_ACCOMMODATION
               value: {{ .Values.availability.env.mongoCollectionNameAccommodation }}
             - name: MONGO_COLLECTION_NAME_AVAILABILITY

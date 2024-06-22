@@ -1,41 +1,41 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    app: {{ .Values.notifications.name }}
-  name: {{ .Values.notifications.name }}
-spec:
-  replicas: {{ .Values.notifications.replicaCount }}
-  selector:
-    matchLabels:
-      app: {{ .Values.notifications.name }}
-  template:
-    metadata:
-      labels:
-        app: {{ .Values.notifications.name }}
-    spec:
-      containers:
-        - name: {{ .Values.notifications.name }}
-          image: {{ .Values.notifications.image.repository }}:{{ .Values.notifications.image.tag }}
-          ports:
-            - containerPort: {{ .Values.notifications.containerPort }}
-          env:
-            - name: PORT
-              value: "{{ .Values.notifications.containerPort }}"
-            - name: MONGO_URI
-              value: {{ .Values.global.mongoUri }}
-            - name: MONGO_DB_NAME
-              value: {{ .Values.notifications.env.mongoDbName }}
-            - name: MONGO_COLLECTION_NAME
-              value: {{ .Values.notifications.env.mongoCollectionName }}
-            - name: ALLOWED_ORIGIN
-              value: {{ .Values.notifications.env.allowedOrigin }}
-            - name: RABBITMQ_HOST
-              value: {{ .Values.global.rabbitmq.host }}
-            - name: RABBITMQ_PORT
-              value: "{{ .Values.global.rabbitmq.port }}"
-            - name: RABBITMQ_USERNAME
-              value: {{ .Values.global.rabbitmq.username }}
-            - name: RABBITMQ_PASSWORD
-              value: {{ .Values.global.rabbitmq.password }}
-      restartPolicy: Always
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   labels:
+#     app: {{ .Values.notifications.name }}
+#   name: {{ .Values.notifications.name }}
+# spec:
+#   replicas: {{ .Values.notifications.replicaCount }}
+#   selector:
+#     matchLabels:
+#       app: {{ .Values.notifications.name }}
+#   template:
+#     metadata:
+#       labels:
+#         app: {{ .Values.notifications.name }}
+#     spec:
+#       containers:
+#         - name: {{ .Values.notifications.name }}
+#           image: {{ .Values.notifications.image.repository }}:{{ .Values.notifications.image.tag }}
+#           ports:
+#             - containerPort: {{ .Values.notifications.containerPort }}
+#           env:
+#             - name: PORT
+#               value: "{{ .Values.notifications.containerPort }}"
+#             - name: MONGO_URI
+#               value: {{ .Values.global.mongoUri }}
+#             - name: MONGO_DB_NAME
+#               value: {{ .Values.notifications.env.mongoDbName }}
+#             - name: MONGO_COLLECTION_NAME
+#               value: {{ .Values.notifications.env.mongoCollectionName }}
+#             - name: ALLOWED_ORIGIN
+#               value: {{ .Values.notifications.env.allowedOrigin }}
+#             - name: RABBITMQ_HOST
+#               value: {{ .Values.global.rabbitmq.host }}
+#             - name: RABBITMQ_PORT
+#               value: "{{ .Values.global.rabbitmq.port }}"
+#             - name: RABBITMQ_USERNAME
+#               value: {{ .Values.global.rabbitmq.username }}
+#             - name: RABBITMQ_PASSWORD
+#               value: {{ .Values.global.rabbitmq.password }}
+#       restartPolicy: Always

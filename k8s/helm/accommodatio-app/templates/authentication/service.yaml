@@ -11,3 +11,4 @@ spec:
       targetPort: {{ .Values.authentication.containerPort }}
   selector:
     app: {{ .Values.authentication.name | default "authentication-service" }}
+ 
